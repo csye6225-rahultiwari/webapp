@@ -43,6 +43,9 @@ As a user, I want to get my account information. Response payload should return 
 ### Postman testing instructions:
 
 GET : localhost:8080/api/user/create
+
 POST : localhost:8080/api/user/findOne
+
 POST : localhost:8080/api/user/findAll
+
 PUT: localhost:8080/api/user/update

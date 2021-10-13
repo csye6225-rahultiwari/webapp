@@ -38,7 +38,8 @@ exports.create = (req, res) => {
     bcrypt.hash(req.body.password, 10, (err,hash) => {
         if(err){
             res.status(500).json({
-                error: err
+                error: err,
+                message : "Some error occurred while creating the user"
             });
         }
         else{
@@ -60,22 +61,25 @@ exports.create = (req, res) => {
                 {
                     expiresIn : "1h"
                 })
+                console.log(data.id)
+                const dataNew = {
+                  userID : data.id,
+                  first_name : req.body.first_name,
+                  last_name : req.body.last_name,
+                  username : req.body.username
+                }
                 
-                res.send({data, token});
+                res.status(200).send({dataNew, token});
 
             })
             .catch(err => {
-                res.status(500).send({
+                res.status(400).send({
                 message:
                 err.message || "Some error occurred while creating the user."
             });
          });
         }
     } )
-    
-    
-   
-    // Save Users in the database
 
   };
 
@@ -86,7 +90,7 @@ exports.findAll = (req, res) => {
 
   User.findAll({ where: condition })
     .then(data => {
-      res.send(data);
+      res.status(200).send(data);
     })
     .catch(err => {
       res.status(500).send({
@@ -102,41 +106,77 @@ exports.findOne = (req, res) => {
 
   User.findByPk(id)
     .then(data => {
-      res.send(data);
+      res.status(200).send({
+        uuid: data.id,
+        first_name : data.first_name,
+        last_name: data.last_name,
+        username: data.username
+      });
     })
     .catch(err => {
       res.status(500).send({
+        error: err,
         message: "Error retrieving user with id=" + id
       });
     });
 };
 
 // Update a User by the id in the request
+
+
 exports.update = (req, res) => {
-  const id = req.params.id;
-if (req.body.username) {
-    res.status(400).send();
-    return;
-}
-  User.update(req.body, {
-    where: { id: id }
-  })
-    .then(num => {
-      if (num == 1) {
-        res.send({
-          message: "User was updated successfully."
+  bcrypt.hash(req.body.password, 10, (err, hash) => {
+    if(err){
+      res.status(500).json({
+        error : err,
+        message : "Some error occurred while updating the user"
+      });
+    }
+    else if(req.params.id == null){
+      res.status(400).json({
+        message: "Choose a user ID to update"
+      })
+    }
+    else{
+      const id = req.params.id;
+      
+      if (req.body.username) {
+        res.status(400).send({
+          message: "Username cannot be updated"
         });
-      } else {
-        res.send({
-          message: `Cannot update User with id=${id}. Maybe User was not found or req.body is empty!`
-        });
+        return;
       }
-    })
-    .catch(err => {
-      res.status(500).send({
+      const userUpdate = {
+        first_name: req.body.first_name,
+        last_name: req.body.last_name,
+        username: req.body.username,
+        password: hash
+    }
+      User.update(userUpdate, {
+        where: { id: id}
+       })
+      .then(num => {
+        if (num == 1) {
+          res.status(200).send({
+            message: "User was updated successfully."
+         });
+        } else {
+          res.status(400).send({
+            message: `Cannot update User with id=${id}. Maybe User was not found or req.body is empty!`
+          });
+        }
+      })
+     .catch(err => {
+       res.status(500).send({
         message: "Error updating User with id=" + id
       });
     });
+
+    }
+
+
+  })
+  
 };
 
 // Delete a Users with the specified id in the request
@@ -148,11 +188,11 @@ exports.delete = (req, res) => {
   })
     .then(num => {
       if (num == 1) {
-        res.send({
+        res.status(200).send({
           message: "User was deleted successfully!"
         });
       } else {
-        res.send({
+        res.status(400).send({
           message: `Cannot delete User with id=${id}. User was not found!`
         });
       }
@@ -171,7 +211,7 @@ exports.deleteAll = (req, res) => {
     truncate: false
   })
     .then(nums => {
-      res.send({ message: `${nums} Users were deleted successfully!` });
+      res.status(200).send({ message: `${nums} Users were deleted successfully!` });
     })
     .catch(err => {
       res.status(500).send({

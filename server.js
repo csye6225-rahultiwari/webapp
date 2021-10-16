@@ -2,7 +2,7 @@ const express = require("express");
 const bodyParser = require("body-parser");
 
 const cors = require("cors");
-
+const auth = require("./app/middleware/auth")
 const app = express();
 
 var corsOptions = {
@@ -19,9 +19,12 @@ app.use(bodyParser.urlencoded({ extended: true}));
 const db = require("./app/models");
 db.sequelize.sync();
 // to get all
-app.get("/", (req, res) => {
+
+app.get("/v1", (req, res) => {
     res.json( {message: "welcome to user database"});
 })
+
+
 
 require("./app/routes/user.routes")(app);
 //port

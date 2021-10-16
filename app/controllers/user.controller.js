@@ -11,27 +11,19 @@ const jwt = require('jsonwebtoken');
 exports.create = (req, res) => {
     // Validate request
     if (!req.body.first_name) {
-      res.status(400).send({
-        message: "First Name can not be empty!"
-      });
+      res.status(400).send();
       return;
     }
     else if(!req.body.last_name){
-        res.status(400).send({
-            message: "Last Name can not be empty!"
-          });
+        res.status(400).send();
           return; 
     }
     else if(!req.body.username){
-        res.status(400).send({
-            message: "User Name can not be empty!"
-          });
+        res.status(400).send();
           return; 
     }
     else if(!req.body.password){
-        res.status(400).send({
-            message: "Password can not be empty!"
-          });
+        res.status(400).send();
           return; 
     }
 
@@ -63,20 +55,19 @@ exports.create = (req, res) => {
                 })
                 console.log(data.id)
                 const dataNew = {
-                  userID : data.id,
+                  id : data.id,
                   first_name : req.body.first_name,
                   last_name : req.body.last_name,
-                  username : req.body.username
+                  username : req.body.username,
+                  account_created: data.account_created,
+                  account_updated: data.account_updated
                 }
                 
-                res.status(200).send({dataNew, token});
+                res.status(201).send(dataNew);
 
             })
             .catch(err => {
-                res.status(400).send({
-                message:
-                err.message || "Some error occurred while creating the user."
-            });
+                res.status(400).send();
          });
         }
     } )
@@ -102,12 +93,11 @@ exports.findAll = (req, res) => {
 
 // Find a User with an id
 exports.findOne = (req, res) => {
-  const id = req.params.id;
-
-  User.findByPk(id)
+  console.log('Finding one', res.locals);
+  User.findByPk(req.params.id)
     .then(data => {
       res.status(200).send({
-        uuid: data.id,
+        id: data.id,
         first_name : data.first_name,
         last_name: data.last_name,
         username: data.username
@@ -125,11 +115,13 @@ exports.findOne = (req, res) => {
 
 
 exports.update = (req, res) => {
+
+  
   bcrypt.hash(req.body.password, 10, (err, hash) => {
     if(err){
-      res.status(500).json({
-        error : err,
-        message : "Some error occurred while updating the user"
+      res.status(400).json({
+        
+        message : "Choose a user ID to update"
       });
     }
     else if(req.params.id == null){
@@ -143,6 +135,18 @@ exports.update = (req, res) => {
       if (req.body.username) {
         res.status(400).send({
           message: "Username cannot be updated"
+        });
+        return;
+      }
+      if (req.body.account_created) {
+        res.status(400).send({
+          message: "account_Created cannot be updated"
+        });
+        return;
+      }
+      if (req.body.account_updated) {
+        res.status(400).send({
+          message: "account_updated cannot be updated"
         });
         return;
       }

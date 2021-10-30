@@ -63,5 +63,6 @@ module.exports = (sequelize, Sequelize) => {
         createdAt: 'account_created'   
 
     });
+    
     return User;
 };

@@ -1,13 +1,21 @@
 const bcrypt = require('bcrypt');
-
-
+const multer = require('multer');
+const path = require('path');
 const { users } = require("../models");
 const db = require("../models");
 const User = db.users;
+const Image = db.images;
 const Op = db.Sequelize.Op;
+const uploadFile = require("../middleware/upload");
+const {uploadFileToS3} = require("../../s3")
+const {deleteFileFromS3} = require("../../s3")
+const fs = require("fs");
+const util = require('util');
+const baseUrl = "http://localhost:8080/v1/self/pic";
 const jwt = require('jsonwebtoken');
+const bodyParser = require('body-parser')
 
-// Create and Save a new Tutorial
+// Create and Save a new User
 exports.create = (req, res) => {
     // Validate request
     if (!req.body.first_name) {
@@ -36,6 +44,7 @@ exports.create = (req, res) => {
         }
         else{
             const userObject = {
+                id: req.body.id,
                 first_name: req.body.first_name,
                 last_name: req.body.last_name,
                 username: req.body.username,
@@ -44,15 +53,7 @@ exports.create = (req, res) => {
             User.create(userObject)
             .then(data => {
                 
-                const token = jwt.sign({
-                    first_name: req.body.first_name,
-                    last_name: req.body.last_name,
-                    username: req.body.username,
-                }, 
-                process.env.JWT_KEY,
-                {
-                    expiresIn : "1h"
-                })
+                
                 console.log(data.id)
                 const dataNew = {
                   id : data.id,
@@ -61,35 +62,34 @@ exports.create = (req, res) => {
                   username : req.body.username,
                   account_created: data.account_created,
                   account_updated: data.account_updated
-                }
-                
-                res.status(201).send(dataNew);
-
+                }                
+                res.status(201).send({dataNew});
             })
             .catch(err => {
                 res.status(400).send();
+                
          });
         }
     } )
 
   };
 
-// Retrieve all Users from the database.
-exports.findAll = (req, res) => {
-  const id = req.query.id;
-  var condition = id ? { id: { [Op.iLike]: `%${id}%` } } : null;
+// // Retrieve all Users from the database.
+// exports.findAll = (req, res) => {
+//   const id = req.query.id;
+//   var condition = id ? { id: { [Op.iLike]: `%${id}%` } } : null;
 
-  User.findAll({ where: condition })
-    .then(data => {
-      res.status(200).send(data);
-    })
-    .catch(err => {
-      res.status(500).send({
-        message:
-          err.message || "Some error occurred while retrieving Users."
-      });
-    });
-};
+//   User.findAll({ where: condition })
+//     .then(data => {
+//       res.status(200).send(data);
+//     })
+//     .catch(err => {
+//       res.status(500).send({
+//         message:
+//           err.message || "Some error occurred while retrieving Users."
+//       });
+//     });
+// };
 
 // Find a User with an id
 exports.findOne = (req, res) => {
@@ -156,8 +156,9 @@ exports.update = (req, res) => {
         username: req.body.username,
         password: hash
     }
+    console.log("UserData", userUpdate)
       User.update(userUpdate, {
-        where: { id: id}
+        where: { id: result.id}
        })
       .then(num => {
         if (num == 1) {
@@ -179,9 +180,207 @@ exports.update = (req, res) => {
     }
 
 
+  })  
+};
+
+
+//Creating Image DB
+
+exports.createImage = async (req, res, location) => {
+  // await User.upload(req.body);
+  // console.log(req.body)
+  const user = await this.findUser(global.username)
+  const imageData = ( {
+    
+    file_name: req.file_name,
+    id: user.id,
+    url: location,
+    upload_date: new Date(),
+    user_id: user.id,
+
+  })
+  // console.log(imageData)
+  const imageExists = await this.findImageByUserID(user.id)
+  if(imageExists){
+    await Image.update(imageData,{
+      where:{
+        id:imageExists.id
+      }
+    })
+  }else{
+    await Image.create(imageData)
+  }
+  return imageData
+}
+
+
+// Uploading Image
+
+exports.upload = async (req, res) => {
+  bodyParser.raw({
+        limit: "3mb",
+        type: ["image/*"],
+    })
+    console.log(req.body)
+    if(!req.body){
+      return res.status(400).send();
+    }
+  try {
+    const file = req.file
+    
+    
+      const result = await uploadFileToS3(req, res);
+    const imageObject = {
+      file_name: result.Key,
+      url: result.Location
+    }
+    console.log("inside upload",result.Key)
+    req.file_name = result.Key
+    const location = result.Location
+    const imageInfo = await this.createImage(req, res, location)
+    
+    res.status(201).send({
+      message: "Profile pic added",
+      imageInfo
+      
+    })
+    
+  } catch (err) {
+    console.log(err);
+
+    if (err.code == "LIMIT_FILE_SIZE") {
+      return res.status(500).send({
+        message: "File size cannot be larger than 2MB!",
+      });
+    }
+    return res.status(400).send();
+    
+  }
+};
+
+exports.getListFiles = (req, res) => {
+  const directoryPath = __basedir + "/resources/static/assets/uploads/";
+
+  fs.readdir(directoryPath, function (err, files) {
+    if (err) {
+      res.status(500).send({
+        message: "Unable to scan files!",
+      });
+    }
+
+    let fileInfos = [];
+
+    files.forEach((file) => {
+      fileInfos.push({
+        name: file,
+        url: baseUrl + file,
+      });
+    });
+
+    res.status(200).send(fileInfos);
+  });
+};
+
+//find user by username
+
+
+
+exports.findUser=async(username)=>{
+  let result = await User.findOne({
+    where: {
+        username: username
+    }
+  });
+return result;
+}
+
+// end find user by email id
+
+//find image by userId
+
+exports.findImageByUserID=async(userId)=>{
+  let result = await Image.findOne({
+    where: {
+        user_id: userId
+    }
+  });
+return result;
+}
+
+//fetch user data
+exports.fetchUserData=async(req, res)=>{
+  let result = await User.findOne({
+    where: {
+      username:global.username
+    }
+  });
+  res.status(200).send({id:result.id,
+    first_name :result.first_name,
+    last_name:result.last_name,
+    username:result.username,
+    account_created: result.account_created,
+    account_updated: result.account_updated
+  })
+}
+
+//fetch image data by username
+
+exports.fetchImageByUsername= async (req, res)=>{
+  let result = await User.findOne({
+    where: {
+      username:global.username
+    }
+  });
+  console.log("UserData", req)
+  const result1 = await Image.findOne({
+    where: {
+      user_id: result.id
+    }
+  })
+  .then(data => {
+    const imageData = {
+      file_name: data.file_name,
+      id: data.id,
+      url: data.url,
+      upload_date: data.upload_date,
+      user_id: data.user_id
+    }  
+    res.status(200).send(imageData);
+  })
+  .catch(err => {
+    console.log(err)
+    res.status(404).send()
   })
   
-};
+}
+
+//delete image data by userId
+
+exports.deleteImageByUserId=async(req, res)=>{
+
+  let result = await User.findOne({
+    where: {
+      username:global.username
+    }
+  });
+  console.log("Request Body", req.body)
+  let result1 = await Image.destroy({
+    where: {
+        user_id:result.id
+    }
+  });
+  console.log("Inside delete",result)
+  await deleteFileFromS3(req, res, result)
+  .then(res.status(204).send())
+  .catch(err => {
+    res.status(404).send()
+  })
+  
+}
+
+
+
+
 
 // Delete a Users with the specified id in the request
 exports.delete = (req, res) => {
@@ -224,4 +423,3 @@ exports.deleteAll = (req, res) => {
       });
     });
 };
-

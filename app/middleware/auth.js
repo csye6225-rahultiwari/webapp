@@ -1,7 +1,9 @@
 const db = require("../models");
 const bcrypt = require('bcrypt');
-
+const multer = require('multer');
+const path = require('path');
 const User = db.users;
+const Image = db.images;
 
 module.exports = (req, res, next) => {
   var authHeader = req.headers.authorization;
@@ -51,12 +53,22 @@ User.findOne({
   else {
     console.log(req.method);
     if (req.method === 'GET') {
-      res.status(200).send({id:result.id,
-        first_name :result.first_name,
-        last_name:result.last_name,
-        username:result.username,
-        account_created: result.account_created,
-        account_updated: result.account_updated})
+      global.username=result.username;
+      next();
+      // res.status(200).send({id:result.id,
+      //   first_name :result.first_name,
+      //   last_name:result.last_name,
+      //   username:result.username,
+      //   account_created: result.account_created,
+      //   account_updated: result.account_updated})
+    }
+    else if(req.method === 'POST'){
+      global.username=result.username;
+      next();
+    }
+    else if(req.method === 'DELETE'){
+      global.username=result.username;
+      next();
     }
     else if (req.method === 'PUT') {
       // Update DB with new req.body
@@ -85,12 +97,15 @@ User.findOne({
         username: req.body.username,
         password: hash
     }
+    console.log("UserUPDATE" , userUpdate)
       User.update(userUpdate,{
         where:{
           id: result.id
         } 
       }).then(data => {
         res.status(204).send()
+      }).catch(err => {
+        res.status(400).send({message: "User Data Error"})
       })
 
         }
@@ -100,24 +115,10 @@ User.findOne({
     }
     }
     
-  // Update user
-  // next()
+ 
 
 })
 
-
-  // if (username == req.body.username && password == req.body.password) {
-  //   next();
-  // } else {
-  //   var err = new Error("You are not authenticated");
-
-  //   res.setHeader("WWW-Authenticate", "Basic");
-
-  //   err.status = 401;
-  //   err.message = "User is not authenticated";
-  //   res.status(401).send(err.message);
-    
-  // }
 }
 
-// module.exports = auth;
+

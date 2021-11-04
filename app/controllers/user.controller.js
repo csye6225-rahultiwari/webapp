@@ -227,14 +227,14 @@ exports.upload = async (req, res) => {
     }
   try {
     const file = req.file
+    const userData = await this.findUser(global.username)
     
-    
-      const result = await uploadFileToS3(req, res);
+      const result = await uploadFileToS3(req, res,userData);
     const imageObject = {
       file_name: result.Key,
       url: result.Location
     }
-    console.log("inside upload",result.Key)
+    console.log("inside upload",req.body)
     req.file_name = result.Key
     const location = result.Location
     const imageInfo = await this.createImage(req, res, location)
@@ -369,7 +369,7 @@ exports.deleteImageByUserId=async(req, res)=>{
         user_id:result.id
     }
   });
-  console.log("Inside delete",result)
+  console.log("Inside delete",result1)
   await deleteFileFromS3(req, res, result)
   .then(res.status(204).send())
   .catch(err => {

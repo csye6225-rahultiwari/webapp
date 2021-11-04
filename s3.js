@@ -8,7 +8,6 @@ const bucketName = process.env.RDS_AWS_BUCKET
 const region = process.env.AWS_BUCKET_REGION
 const accessKeyId = process.env.AWS_ACCESS_KEY
 const secretAccessKey = process.env.AWS_SECRET_KEY
-const Key = "BucketImage" + Math.floor(Math.random() * 10)
 console.log('bucket', bucketName)
 const s3 = new S3({
     region,
@@ -16,14 +15,14 @@ const s3 = new S3({
     secretAccessKey
 })
 
-exports.uploadFileToS3 =  (req, res, file) => {
+exports.uploadFileToS3 =  (req, res, userData) => {
 
-   
+        console.log("File header", req)
       
       const uploadParams = {
       Bucket: bucketName,
       Body: req.body,
-      Key: Key
+      Key: "BucketImage" + userData.id
       }
      return s3.upload(uploadParams).promise()
       
@@ -34,7 +33,7 @@ exports.deleteFileFromS3 = (req,res,result) => {
   console.log("result", result)
   const params1 = {
       Bucket: bucketName,
-      Key: Key
+      Key: "BucketImage" + result.id
   }
   return s3.deleteObject(params1).promise()
 

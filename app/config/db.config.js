@@ -1,14 +1,15 @@
+require('dotenv').config()
 module.exports = {
-HOST : "localhost",
-USER: "postgres",
-PASSWORD: "Netflix@2020",
-DB: "webapp",
+HOST: process.env.RDS_HOSTNAME,
+USER: process.env.RDS_USERNAME,
+PASSWORD: process.env.RDS_PASSWORD,
+DB: process.env.RDS_DB_NAME,
 dialect: "postgres",
 pool: {
     max: 5,
     min: 0,
     acquire: 30000,
-    idle: 10000
+    idle: 20000
 },
 dialectOptions: {
     useUTC: false, //for reading from database

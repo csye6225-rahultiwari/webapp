@@ -1,9 +1,9 @@
 module.exports = {
   apps: [
     {
-      name: 'aws-codedeploy',
-      script: 'npx',
-      args: 'serve -s build -l 8000 -n',
+      name: 'webapp',
+      script: 'npm',
+      args: 'start',
       interpreter: 'none',
       env: {
         NODE_ENV: 'development',

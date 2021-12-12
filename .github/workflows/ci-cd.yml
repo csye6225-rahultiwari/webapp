@@ -24,9 +24,6 @@ jobs:
       uses: actions/setup-node@v2
       with: 
           node-version: '14'
-    - name: Setting up environment
-      run: |
-        cp /home/ubuntu/.env /home/ubuntu/webapp
            
     - name: install dependencies
       run:  npm install nodemon

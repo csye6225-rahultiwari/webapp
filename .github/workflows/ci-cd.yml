@@ -10,7 +10,7 @@ on:
 jobs:
   build:
     # The type of runner that the job will run on
-    name: upload to bucket and codedeploy
+    name: Upload to S3 and Initializing Code Deploy
     runs-on: ubuntu-latest
 
     # Steps represent a sequence of tasks that will be executed as part of the job
@@ -31,9 +31,10 @@ jobs:
 
     - name: install AWS CLI 
       run:  |
+        sudo apt update
         curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
         unzip awscliv2.zip
-        sudo ./aws/install --update
+        sudo ./aws/install
         sudo rm -rf aws
         sudo rm awscliv2.zip
     - name: configure AWS credentials
@@ -42,15 +43,15 @@ jobs:
            aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID}}
            aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY}}
            aws-region: ${{ secrets.AWS_REGION }}
-    - name: upload to bucket
+    - name: Uploading to S3
       run: |
          aws deploy push \
          --application-name csye6225-webapp \
-         --description "This is a revision for the csye6225-webapp-${{ github.sha }}" \
+         --description "Changed Version for csye6225-webapp-${{ github.sha }}" \
          --ignore-hidden-files \
          --s3-location s3://${{ secrets.S3_BUCKET }}/csye6225-webapp-${{ github.sha }}.zip \
          --source .
-    - name: AWS Create Deployment
+    - name: Creating AWS Deployment
       run: |
           aws deploy create-deployment \
            --application-name csye6225-webapp \

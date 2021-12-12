@@ -12,3 +12,4 @@ else
   echo "Creating ${DIR} directory"
   mkdir ${DIR}
 fi
+cp /home/ubuntu/.env /home/ubuntu/webapp

@@ -2,92 +2,58 @@ name: CI/CD
 
 on:
   push:
-    branches:
-      - staging
+    branches: [main]
   pull_request:
-    branches:
-      - staging
+    branches: [main]
+
 
 jobs:
-  buildAndTest:
-    name: CI Pipeline
+  build:
+    # The type of runner that the job will run on
+    name: Upload to S3 and Initializing Code Deploy
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: ['12.x']
 
+    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      - uses: actions/checkout@v2
+    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+    - name: Checkout Repository
+      uses: actions/checkout@v2
 
-      # Initialize Node.js
-      - name: Install Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v1
-        with:
-          node-version: ${{ matrix.node-version }}
+    # Ref: https://github.com/marketplace/actions/packer-github-actions
+    - name: setup node 
+      uses: actions/setup-node@v2
+      with: 
+          node-version: '14'
+           
+    - name: install dependencies
+      run:  npm install nodemon
+      
 
-      # Install project dependencies, test and build
-      - name: Install dependencies
-        run: npm install nodemon
-      - name: Run build
-        run: npm run build
-
-  deploy:
-    name: CD Pipeline
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: [3.8]
-        node-version: ['12.x']
-        appname: ['aws-codedeploy']
-        deploy-group: ['staging']
-        s3-bucket: ['codedeploy.rahultiwari.me']
-        s3-filename: ['staging-aws-codedeploy-${{ github.sha }}']
-
-    needs: buildAndTest
-    steps:
-      - uses: actions/checkout@v2
-
-      # Initialize Node.js
-      - name: Install Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v1
-        with:
-          node-version: ${{ matrix.node-version }}
-
-      # Install project dependencies and build
-      - name: Install dependencies
-        run: npm install
-      - name: Run build
-        run: npm run build
-
-      # Install AWS CLI 2
-      - name: Install AWS CLI 2
-        run: |
-          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-          unzip awscliv2.zip
-          sudo ./aws/install
-      # Configure AWS credentials
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ap-southeast-1
-
-      # Deploy push to AWS S3
-      - name: AWS Deploy push
-        run: |
-          aws deploy push \
-          --application-name ${{ matrix.appname }} \
-          --description "This is a revision for the ${{ matrix.appname }}-${{ github.sha }}" \
-          --ignore-hidden-files \
-          --s3-location s3://${{ matrix.s3-bucket }}/${{ matrix.s3-filename }}.zip \
-          --source .
-      # Create deployment to CodeDeploy
-      - name: AWS Create Deployment
-        run: |
+    - name: install AWS CLI 
+      run:  |
+        curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+        unzip awscliv2.zip
+        sudo ./aws/install --update
+        sudo apt upgrade
+    - name: configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID}}
+           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY}}
+           aws-region: ${{ secrets.AWS_REGION }}
+    - name: Uploading to S3
+      run: |
+         aws deploy push \
+         --application-name csye6225-webapp \
+         --description "Changed Version for csye6225-webapp-${{ github.sha }}" \
+         --ignore-hidden-files \
+         --s3-location s3://${{ secrets.S3_BUCKET }}/csye6225-webapp-${{ github.sha }}.zip \
+         --source .
+    - name: Creating AWS Deployment
+      run: |
           aws deploy create-deployment \
-           --application-name ${{ matrix.appname }} \
-           --deployment-config-name CodeDeployDefault.OneAtATime \
-           --deployment-group-name ${{ matrix.deploy-group }} \
+           --application-name csye6225-webapp \
+           --deployment-config-name CodeDeployDefault.AllAtOnce \
+           --deployment-group-name csye6225-webapp-deployment \
            --file-exists-behavior OVERWRITE \
-           --s3-location bucket=${{ matrix.s3-bucket }},key=${{ matrix.s3-filename }}.zip,bundleType=zip \
+           --s3-location bucket=${{ secrets.S3_BUCKET }},key=csye6225-webapp-${{ github.sha }}.zip,bundleType=zip \

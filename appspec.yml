@@ -2,7 +2,7 @@ version: 0.0
 os: linux
 files:
   - source: /
-    destination: /home/ubuntu/aws-codedeploy
+    destination: /home/ubuntu/webapp
 permissions:
   - object: /home/ubuntu
     owner: ubuntu
@@ -11,14 +11,6 @@ permissions:
       - directory
       - file
 hooks:
-  ApplicationStop:
-    - location: scripts/application_stop.sh
-      timeout: 300
-      runas: ubuntu
-  BeforeInstall:
-    - location: scripts/before_install.sh
-      timeout: 300
-      runas: ubuntu
   ApplicationStart:
     - location: scripts/reload-pm2.sh
       timeout: 300

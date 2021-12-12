@@ -24,8 +24,15 @@ jobs:
       uses: actions/setup-node@v2
       with: 
           node-version: '14'
+    - name: Setting up environment
+      run: |
+        cd ..
+        cp .env webapp
+           
     - name: install dependencies
-      run:  npm install
+      run:  npm install nodemon
+      
+
     - name: install AWS CLI 
       run:  |
         curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"

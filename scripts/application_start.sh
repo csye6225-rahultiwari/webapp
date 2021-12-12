@@ -4,6 +4,7 @@
 sudo chmod -R 777 /home/ubuntu/webapp
 
 #navigate into our working directory where we have all our github files
+cp .env webapp
 cd /home/ubuntu/webapp || exit
 
 #add npm and node to path

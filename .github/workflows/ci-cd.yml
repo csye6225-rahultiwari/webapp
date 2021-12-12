@@ -27,6 +27,7 @@ jobs:
     - name: Setting up environment
       run: |
         cd ..
+        pwd
         cp .env webapp
            
     - name: install dependencies

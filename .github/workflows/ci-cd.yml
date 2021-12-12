@@ -8,59 +8,50 @@ on:
 
 
 jobs:
-  buildAndTest:
-    name: CI Pipeline
+  build:
+    # The type of runner that the job will run on
+    name: upload to bucket and codedeploy
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: ['14']
-        appname: ['csye6225-webapp']
-        deploy-group: ['csye6225-webapp-deployment']
-        s3-bucket: ['codedeploy.rahultiwari.me']
-        s3-filename: ['csye6225-webapp-${{ github.sha }}']
 
+    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      - uses: actions/checkout@v2
+    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+    - name: Checkout Repository
+      uses: actions/checkout@v2
 
-      # # Initialize Node.js
-      # - name: Install Node.js ${{ matrix.node-version }}
-      #   uses: actions/setup-node@v1
-      #   with:
-      #     node-version: ${{ matrix.node-version }}
-
-      # Install project dependencies, test and build
-      - name: Install dependencies
-        run: npm install nodemon
-
-      # Install AWS CLI 2
-      - name: Install AWS CLI 2
-        run:
-          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-          unzip awscliv2.zip
-          sudo ./aws/install
-      # Configure AWS credentials
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
-
-      # Deploy push to AWS S3
-      - name: AWS Deploy push
-        run: |
-          aws deploy push \
-          --application-name ${{ matrix.appname }} \
-          --description "This is a revision for the ${{ matrix.appname }}-${{ github.sha }}" \
-          --ignore-hidden-files \
-          --s3-location s3://${{ matrix.s3-bucket }}/${{ matrix.s3-filename }}.zip \
-          --source .
-      # Create deployment to CodeDeploy
-      - name: AWS Create Deployment
-        run: |
+    # Ref: https://github.com/marketplace/actions/packer-github-actions
+    - name: setup node 
+      uses: actions/setup-node@v2
+      with: 
+          node-version: '14'
+    - name: install dependencies
+      run:  npm install
+    - name: install AWS CLI 
+      run:  |
+        curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+        unzip awscliv2.zip
+        sudo ./aws/install --update
+        sudo rm -rf aws
+        sudo rm awscliv2.zip
+    - name: configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID}}
+           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY}}
+           aws-region: ${{ secrets.AWS_REGION }}
+    - name: upload to bucket
+      run: |
+         aws deploy push \
+         --application-name csye6225-webapp \
+         --description "This is a revision for the csye6225-webapp-${{ github.sha }}" \
+         --ignore-hidden-files \
+         --s3-location s3://${{ secrets.S3_BUCKET }}/csye6225-webapp-${{ github.sha }}.zip \
+         --source .
+    - name: AWS Create Deployment
+      run: |
           aws deploy create-deployment \
-           --application-name ${{ matrix.appname }} \
+           --application-name csye6225-webapp \
            --deployment-config-name CodeDeployDefault.AllAtOnce \
-           --deployment-group-name ${{ matrix.deploy-group }} \
+           --deployment-group-name csye6225-webapp-deployment \
            --file-exists-behavior OVERWRITE \
-           --s3-location bucket=${{ matrix.s3-bucket }},key=${{ matrix.s3-filename }}.zip,bundleType=zip \
+           --s3-location bucket=${{ secrets.S3_BUCKET }},key=csye6225-webapp-${{ github.sha }}.zip,bundleType=zip \

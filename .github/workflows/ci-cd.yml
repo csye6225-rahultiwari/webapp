@@ -26,9 +26,7 @@ jobs:
           node-version: '14'
     - name: Setting up environment
       run: |
-        cd ..
-        pwd
-        cp .env webapp
+        cp /home/ubuntu/.env /home/ubuntu/webapp
            
     - name: install dependencies
       run:  npm install nodemon

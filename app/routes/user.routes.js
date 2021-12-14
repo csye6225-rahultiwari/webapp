@@ -19,7 +19,9 @@ module.exports = app => {
   
     // Retrieve a single User with id
     router.get("/self", auth, user.fetchUserData);
-  
+    router.get("/healthCheck", (req,res) => {
+      res.status(200);
+    })
     // Update a User with id
     router.put("/self", auth, user.update);
 

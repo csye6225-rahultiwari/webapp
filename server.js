@@ -9,7 +9,7 @@ const app = express();
 global.__basedir = __dirname;
 
 var corsOptions = {
-    origin : "http://localhost"
+    origin : "http://localhost:8080"
 };
 
 app.use(cors(corsOptions));
@@ -25,7 +25,7 @@ const db = require("./app/models");
 db.sequelize.sync();
 // to get all
 global.username;
-app.get("/", (req, res) => {
+app.get("/v2", (req, res) => {
     res.json( {message: "Welcome to the Cloud Application"});
 })
 

@@ -25,7 +25,7 @@ const db = require("./app/models");
 db.sequelize.sync();
 // to get all
 global.username;
-app.get("/v2", (req, res) => {
+app.get("/", (req, res) => {
     res.json( {message: "Welcome to the Cloud Application"});
 })
 

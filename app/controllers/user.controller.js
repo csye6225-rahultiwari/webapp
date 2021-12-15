@@ -15,7 +15,7 @@ const baseUrl = "http://localhost:8080/v1/self/pic";
 const jwt = require('jsonwebtoken');
 const bodyParser = require('body-parser')
 const SDCClient = require("statsd-client");
-const sdcclient = new SDCClient({});
+const sdcclient = new SDCClient({host: 'localhost', port: 8080});
 
 // Create and Save a new User
 exports.create = (req, res) => {

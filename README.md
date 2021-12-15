@@ -49,3 +49,8 @@ POST : localhost:8080/api/user/findOne
 POST : localhost:8080/api/user/findAll
 
 PUT: localhost:8080/api/user/update
+
+### Amazon Cloud Watch implementation:
+
+1) Application is being deployed on multiple instances through cloud watch.
+2) Application logs being created through statsD library

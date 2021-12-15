@@ -29,6 +29,7 @@ app.get("/", (req, res) => {
     res.json( {message: "Welcome to the Cloud Application"});
 })
 
+
 require("./app/routes/user.routes")(app);
 //port
 

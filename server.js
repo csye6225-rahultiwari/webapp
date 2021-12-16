@@ -24,11 +24,11 @@ app.use(bodyParser.urlencoded({ extended: true}));
 const db = require("./app/models");
 db.sequelize.sync();
 // to get all
+
 global.username;
 app.get("/", (req, res) => {
-    res.json( {message: "welcome to user database"});
+    res.json( {message: "Welcome to the Cloud Application"});
 })
-
 
 
 require("./app/routes/user.routes")(app);

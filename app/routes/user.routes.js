@@ -21,7 +21,7 @@ module.exports = app => {
     router.get("/self", auth, user.fetchUserData);
     
     router.get("/healthCheck", (req,res) => {
-      res.status(200);
+      res.send(200);
     })
     // Update a User with id
     router.put("/self", auth, user.update);

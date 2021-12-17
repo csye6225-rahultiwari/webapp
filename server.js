@@ -12,6 +12,7 @@ var corsOptions = {
     origin : "http://localhost"
 };
 
+
 app.use(cors(corsOptions));
 
 app.use(

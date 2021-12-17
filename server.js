@@ -27,7 +27,7 @@ db.sequelize.sync();
 // to get all
 
 global.username;
-app.get("/", (req, res) => {
+app.get("/v3", (req, res) => {
     res.json( {message: "Welcome to the Cloud Application"});
 })
 

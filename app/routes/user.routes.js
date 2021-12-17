@@ -59,7 +59,7 @@ module.exports = app => {
 
 
     
-    app.use("/v1/user", router);
+    app.use("/v3/user", router);
 
     // ROUTE TO POST IMAGE
 

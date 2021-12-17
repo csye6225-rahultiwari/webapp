@@ -21,7 +21,7 @@ const sdcclient = new SDCClient({host: 'localhost', port: 8080});
 exports.create = (req, res) => {
     // Validate request
     sdcclient.increment("Creating User");
-    let startTime = Date.now();
+    let startTime = new Date();
     
     if (!req.body.first_name) {
       res.status(400).send();
@@ -68,7 +68,7 @@ exports.create = (req, res) => {
                   account_created: data.account_created,
                   account_updated: data.account_updated
                 } 
-                let endTime = Date.now();
+                let endTime = new Date();
                 sdcclient.timing(
                   "User creation time",
                   endTime - startTime
@@ -104,11 +104,11 @@ exports.create = (req, res) => {
 // Find a User with an id
 exports.findOne = (req, res) => {
   sdcclient.increment("Finding User");
-  let startTime = Date.now();
+  let startTime = new Date();
   console.log('Finding one', res.locals);
   User.findByPk(req.params.id)
     .then(data => {
-      let endTime = Date.now();
+      let endTime = new Date();
                 sdcclient.timing(
                   "User Find time",
                   endTime - startTime
@@ -134,7 +134,7 @@ exports.findOne = (req, res) => {
 exports.update = (req, res) => {
 
   sdcclient.increment("Updating User");
-  let startTime = Date.now();
+  let startTime = new Date();
   bcrypt.hash(req.body.password, 10, (err, hash) => {
     if(err){
       res.status(400).json({
@@ -180,7 +180,7 @@ exports.update = (req, res) => {
        })
       .then(num => {
         if (num == 1) {
-          let endTime = Date.now();
+          let endTime = new Date();
                 sdcclient.timing(
                   "User Update time",
                   endTime - startTime
@@ -213,7 +213,7 @@ exports.createImage = async (req, res, location) => {
   // await User.upload(req.body);
   // console.log(req.body)
   sdcclient.increment("Creating Image");
-  let startTime = Date.now();
+  let startTime = new Date();
   const user = await this.findUser(global.username)
   const imageData = ( {
     
@@ -224,7 +224,7 @@ exports.createImage = async (req, res, location) => {
     user_id: user.id,
 
   })
-  let endTime = Date.now();
+  let endTime = new Date();
                 sdcclient.timing(
                   "Creating Image time",
                   endTime - startTime
@@ -248,7 +248,7 @@ exports.createImage = async (req, res, location) => {
 
 exports.upload = async (req, res) => {
   sdcclient.increment("Uploading Image");
-  let startTime = Date.now();
+  let startTime = new Date();
   bodyParser.raw({
         limit: "3mb",
         type: ["image/*"],
@@ -270,7 +270,7 @@ exports.upload = async (req, res) => {
     req.file_name = result.Key
     const location = result.Location
     const imageInfo = await this.createImage(req, res, location)
-    let endTime = Date.now();
+    let endTime = new Date();
                 sdcclient.timing(
                   "Image Upload time",
                   endTime - startTime
@@ -296,7 +296,7 @@ exports.upload = async (req, res) => {
 
 exports.getListFiles = (req, res) => {
   sdcclient.increment("Fetching List");
-  let startTime = Date.now();
+  let startTime = new Date();
   const directoryPath = __basedir + "/resources/static/assets/uploads/";
 
   fs.readdir(directoryPath, function (err, files) {
@@ -314,7 +314,7 @@ exports.getListFiles = (req, res) => {
         url: baseUrl + file,
       });
     });
-    let endTime = Date.now();
+    let endTime = new Date();
                 sdcclient.timing(
                   "Get List time",
                   endTime - startTime
@@ -352,13 +352,13 @@ return result;
 //fetch user data
 exports.fetchUserData=async(req, res)=>{
   sdcclient.increment("Uploading Image");
-  let startTime = Date.now();
+  let startTime = new Date();
   let result = await User.findOne({
     where: {
       username:global.username
     }
   });
-  let endTime = Date.now();
+  let endTime = new Date();
                 sdcclient.timing(
                   "Get User Data time",
                   endTime - startTime
@@ -376,7 +376,7 @@ exports.fetchUserData=async(req, res)=>{
 
 exports.fetchImageByUsername= async (req, res)=>{
   sdcclient.increment("Searching UserName By Image");
-  let startTime = Date.now();
+  let startTime = new Date();
   let result = await User.findOne({
     where: {
       username:global.username
@@ -396,7 +396,7 @@ exports.fetchImageByUsername= async (req, res)=>{
       upload_date: data.upload_date,
       user_id: data.user_id
     }
-    let endTime = Date.now();
+    let endTime = new Date();
                 sdcclient.timing(
                   "Get Image by UserName time",
                   endTime - startTime
@@ -414,7 +414,7 @@ exports.fetchImageByUsername= async (req, res)=>{
 
 exports.deleteImageByUserId=async(req, res)=>{
   sdcclient.increment("Deleting Image");
-  let startTime = Date.now();
+  let startTime = new Date();
   let result = await User.findOne({
     where: {
       username:global.username
@@ -429,7 +429,7 @@ exports.deleteImageByUserId=async(req, res)=>{
   console.log("Inside delete",result1)
   await deleteFileFromS3(req, res, result)
   .then( data => {
-    let endTime = Date.now();
+    let endTime = new Date();
     sdcclient.timing(
     "Delete Image time",
     endTime - startTime); 
